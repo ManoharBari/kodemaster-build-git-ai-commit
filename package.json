@@ -1,0 +1,27 @@
+{
+  "name": "git-ai-commit",
+  "description": "Build an AI-Powered Commit Message Generator challenge, from Vizh.ai",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "bin": {
+    "git-ai-commit": "dist/index.js"
+  },
+  "scripts": {
+    "dev": "ts-node src/index.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "dotenv": "^16.4.5",
+    "inquirer": "^8.2.6",
+    "openai": "^4.26.0",
+    "ora": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.8",
+    "@types/node": "^20.11.30",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.3"
+  }
+}
