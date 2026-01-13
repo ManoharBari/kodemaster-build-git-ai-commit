@@ -2,6 +2,7 @@
 
 import { Command } from "commander";
 import chalk from "chalk";
+import { getStagedDiff } from "./git/diff";
 
 const program = new Command();
 
@@ -26,4 +27,5 @@ program
 //     console.log(chalk.green('Hello from git-ai-commit!'));
 //   });
 
+getStagedDiff();
 program.parse(process.argv);
