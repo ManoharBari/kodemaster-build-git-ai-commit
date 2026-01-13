@@ -14,9 +14,10 @@ program
   .command("hello")
   .description("Test command")
   .action(() => {
-    console.log("Hello world");
+    console.log(chalk.green("Hello world"));
+    console.log(chalk.gray("This is styled text"));
   });
-  
+
 // TODO: Uncomment the code below to pass the first stage
 // program
 //   .command('hello')
