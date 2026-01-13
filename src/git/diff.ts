@@ -5,7 +5,7 @@ const execAsync = promisify(exec);
 
 export async function getStagedDiff(): Promise<string> {
   try {
-    const { stdout } = await execAsync("git diff --staged");
+    const { stdout } = await execAsync("git diff --cached --name-only");
     return stdout;
   } catch (error) {
     console.error("Error reading git diff:", error);
