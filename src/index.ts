@@ -6,6 +6,7 @@ import { getStagedDiff } from "./git/diff";
 
 const program = new Command();
 
+
 program
   .name("git-ai-commit")
   .description("AI-powered commit message generator")
