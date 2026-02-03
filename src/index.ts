@@ -2,9 +2,9 @@
 
 import { Command } from "commander";
 import chalk from "chalk";
+import { validateConfig } from "./config";
 import { getStagedDiff } from "./git/diff";
-import { filterChanges, parseDiff } from "./git/parser";
-import "./config";
+import { parseDiff, filterChanges } from "./git/parser";
 import { generatePrompt } from "./utils/formatter";
 import { generateCommitMessage } from "./ai/generator";
 
@@ -27,6 +27,8 @@ program
   .command("generate")
   .description("Generate a commit message from staged changes")
   .action(async () => {
+    validateConfig();
+
     console.log(chalk.gray("Reading staged changes..."));
     const diff = await getStagedDiff();
 
@@ -51,7 +53,7 @@ program
       process.exit(1);
     }
 
-    console.log(chalk.green(`  ✓ Found ${files.length} changed file(s)`));
+    console.log(chalk.green(`Found ${files.length} changed file(s)`));
 
     const prompt = generatePrompt(files);
 
