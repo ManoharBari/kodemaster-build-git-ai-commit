@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-function validateConfig(): void {
+export function validateConfig(): void {
   if (!process.env.OPENAI_API_KEY) {
     console.error(
       "Fatal: OPENAI_API_KEY is not set.\n" +
@@ -14,8 +14,6 @@ function validateConfig(): void {
     process.exit(1);
   }
 }
-
-validateConfig();
 
 export const config = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY!,
