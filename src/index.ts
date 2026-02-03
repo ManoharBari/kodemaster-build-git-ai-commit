@@ -4,6 +4,9 @@ import { Command } from "commander";
 import chalk from "chalk";
 import { getStagedDiff } from "./git/diff";
 import { filterChanges, parseDiff } from "./git/parser";
+import "./config";
+import { generatePrompt } from "./utils/formatter";
+import { generateCommitMessage } from "./ai/generator";
 
 const program = new Command();
 
@@ -24,10 +27,13 @@ program
   .command("generate")
   .description("Generate a commit message from staged changes")
   .action(async () => {
+    console.log(chalk.gray("Reading staged changes..."));
     const diff = await getStagedDiff();
 
     if (!diff.trim()) {
-      console.error("No staged changes found. Did you forget to `git add`?");
+      console.error(
+        chalk.red("No staged changes found. Did you forget to `git add`?"),
+      );
       process.exit(1);
     }
 
@@ -37,13 +43,29 @@ program
 
     if (files.length === 0) {
       console.warn(
-        "All staged changes are in ignored files (e.g. lock files, .DS_Store).\n" +
-          "Stage at least one meaningful file to generate a commit message.",
+        chalk.yellow(
+          "All staged changes are in ignored files (e.g. lock files, .DS_Store).\n" +
+            "Stage at least one meaningful file to generate a commit message.",
+        ),
       );
       process.exit(1);
     }
 
-    console.log(`Found ${files.length} changed file(s)`);
+    console.log(chalk.green(`  ✓ Found ${files.length} changed file(s)`));
+
+    const prompt = generatePrompt(files);
+
+    console.log(chalk.gray("Generating commit message..."));
+    const commitMessage = await generateCommitMessage(prompt);
+
+    console.log("");
+    console.log(chalk.green("─".repeat(40)));
+    console.log(chalk.green("  Generated commit message:"));
+    console.log(chalk.green("─".repeat(40)));
+    console.log(chalk.bold(`  ${commitMessage}`));
+    console.log(chalk.green("─".repeat(40)));
+    console.log("");
+    console.log(chalk.gray(`  Tip: git commit -m "${commitMessage}"`));
   });
 
 program.parse(process.argv);
