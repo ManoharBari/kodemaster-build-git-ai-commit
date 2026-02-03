@@ -3,7 +3,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { getStagedDiff } from "./git/diff";
-import { parseDiff } from "./git/parser";
+import { filterChanges, parseDiff } from "./git/parser";
 
 const program = new Command();
 
@@ -31,7 +31,17 @@ program
       process.exit(1);
     }
 
-    const files = parseDiff(diff);
+    const parsed = parseDiff(diff);
+
+    const files = filterChanges(parsed);
+
+    if (files.length === 0) {
+      console.warn(
+        "All staged changes are in ignored files (e.g. lock files, .DS_Store).\n" +
+          "Stage at least one meaningful file to generate a commit message.",
+      );
+      process.exit(1);
+    }
 
     console.log(`Found ${files.length} changed file(s)`);
   });
