@@ -16,5 +16,7 @@ export function validateConfig(): void {
 }
 
 export const config = {
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY!,
+  get OPENAI_API_KEY(): string {
+    return process.env.OPENAI_API_KEY!;
+  },
 };
