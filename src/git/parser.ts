@@ -30,7 +30,6 @@ export function parseDiff(rawDiff: string): FileChange[] {
   return chunks.map((chunk) => {
     const lines = chunk.split("\n");
 
-    // Extract filename: a/src/index.ts b/src/index.ts -> src/index.ts
     // More defensive - try multiple patterns
     let file = "unknown";
     const fileMatch = lines[0].match(/a\/(.+?)\s+b\//);
