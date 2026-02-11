@@ -31,56 +31,65 @@ program
   .command("generate")
   .description("Generate a commit message from staged changes")
   .action(async () => {
-    // ── 1. Validate config (only here, not at import time) ───────────────────
-    validateConfig();
+    try {
+      // ── 1. Validate config ───────────────────────────────────────────────
+      validateConfig();
 
-    // ── 2. Read git ──────────────────────────────────────────────────────────
-    console.log(chalk.gray("Reading staged changes..."));
-    const diff = await getStagedDiff();
+      // ── 2. Read git ──────────────────────────────────────────────────────
+      console.log(chalk.gray("Reading staged changes..."));
+      const diff = await getStagedDiff();
 
-    // ── 3. Guard: nothing staged ─────────────────────────────────────────────
-    if (!diff.trim()) {
+      // ── 3. Guard: nothing staged ─────────────────────────────────────────
+      if (!diff.trim()) {
+        console.error(
+          chalk.red("No staged changes found. Did you forget to `git add`?"),
+        );
+        process.exit(1);
+      }
+
+      // ── 4. Parse ─────────────────────────────────────────────────────────
+      const parsed = parseDiff(diff);
+
+      // ── 5. Filter noise ──────────────────────────────────────────────────
+      const files = filterChanges(parsed);
+
+      // ── 6. Guard: only noise was staged ──────────────────────────────────
+      if (files.length === 0) {
+        console.warn(
+          chalk.yellow(
+            "All staged changes are in ignored files (e.g. lock files, .DS_Store).\n" +
+              "Stage at least one meaningful file to generate a commit message.",
+          ),
+        );
+        process.exit(1);
+      }
+
+      console.log(chalk.green(`  ✓ Found ${files.length} changed file(s)`));
+
+      // ── 7. Format the briefing ───────────────────────────────────────────
+      const prompt = generatePrompt(files);
+
+      // ── 8. Send to AI ────────────────────────────────────────────────────
+      console.log(chalk.gray("Generating commit message..."));
+      const commitMessage = await generateCommitMessage(prompt);
+
+      // ── 9. Output ────────────────────────────────────────────────────────
+      console.log("");
+      console.log(chalk.green("─".repeat(40)));
+      console.log(chalk.green("  Generated commit message:"));
+      console.log(chalk.green("─".repeat(40)));
+      console.log(chalk.bold(`  ${commitMessage}`));
+      console.log(chalk.green("─".repeat(40)));
+      console.log("");
+      console.log(chalk.gray(`  Tip: git commit -m "${commitMessage}"`));
+    } catch (error) {
+      // Catch any unexpected errors and show them clearly
       console.error(
-        chalk.red("No staged changes found. Did you forget to `git add`?"),
+        chalk.red("\n✗ Error:"),
+        error instanceof Error ? error.message : error,
       );
       process.exit(1);
     }
-
-    // ── 4. Parse ─────────────────────────────────────────────────────────────
-    const parsed = parseDiff(diff);
-
-    // ── 5. Filter noise ──────────────────────────────────────────────────────
-    const files = filterChanges(parsed);
-
-    // ── 6. Guard: only noise was staged ──────────────────────────────────────
-    if (files.length === 0) {
-      console.warn(
-        chalk.yellow(
-          "All staged changes are in ignored files (e.g. lock files, .DS_Store).\n" +
-            "Stage at least one meaningful file to generate a commit message.",
-        ),
-      );
-      process.exit(1);
-    }
-
-    console.log(chalk.green(`  ✓ Found ${files.length} changed file(s)`));
-
-    // ── 7. Format the briefing ───────────────────────────────────────────────
-    const prompt = generatePrompt(files);
-
-    // ── 8. Send to AI ────────────────────────────────────────────────────────
-    console.log(chalk.gray("Generating commit message..."));
-    const commitMessage = await generateCommitMessage(prompt);
-
-    // ── 9. Output ────────────────────────────────────────────────────────────
-    console.log("");
-    console.log(chalk.green("─".repeat(40)));
-    console.log(chalk.green("  Generated commit message:"));
-    console.log(chalk.green("─".repeat(40)));
-    console.log(chalk.bold(`  ${commitMessage}`));
-    console.log(chalk.green("─".repeat(40)));
-    console.log("");
-    console.log(chalk.gray(`  Tip: git commit -m "${commitMessage}"`));
   });
 
 // ─── Run ─────────────────────────────────────────────────────────────────────

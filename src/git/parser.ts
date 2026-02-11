@@ -1,5 +1,7 @@
 import { FileChange } from "../types";
 
+// ─── Noise list ──────────────────────────────────────────────────────────────
+
 const IGNORED_PATTERNS: string[] = [
   "package-lock.json",
   "yarn.lock",
@@ -8,21 +10,39 @@ const IGNORED_PATTERNS: string[] = [
   ".DS_Store",
   ".env",
   ".env.local",
-  "*.log", // any .log file
-  "dist/", // anything inside dist/
-  "build/", // anything inside build/
-  ".next/", // Next.js build output
+  "*.log",
+  "dist/",
+  "build/",
+  ".next/",
 ];
 
+// ─── parseDiff ───────────────────────────────────────────────────────────────
+
 export function parseDiff(rawDiff: string): FileChange[] {
+  // Handle empty input
+  if (!rawDiff || !rawDiff.trim()) {
+    return [];
+  }
+
   // Split by the diff header, ignore the first empty chunk if any
   const chunks = rawDiff.split("diff --git ").filter(Boolean);
 
   return chunks.map((chunk) => {
     const lines = chunk.split("\n");
+
     // Extract filename: a/src/index.ts b/src/index.ts -> src/index.ts
-    const fileMatch = lines[0].match(/a\/(.+) b\//);
-    const file = fileMatch ? fileMatch[1] : "unknown";
+    // More defensive - try multiple patterns
+    let file = "unknown";
+    const fileMatch = lines[0].match(/a\/(.+?)\s+b\//);
+    if (fileMatch) {
+      file = fileMatch[1];
+    } else {
+      // Fallback: if the format is slightly different, try to extract anything
+      const simpleFallback = lines[0].match(/([^\s]+)/);
+      if (simpleFallback) {
+        file = simpleFallback[1].replace(/^a\/|^b\//, "");
+      }
+    }
 
     let additions = 0;
     let deletions = 0;
@@ -36,25 +56,32 @@ export function parseDiff(rawDiff: string): FileChange[] {
   });
 }
 
+// ─── filterChanges ───────────────────────────────────────────────────────────
+
 export function filterChanges(changes: FileChange[]): FileChange[] {
   return changes.filter((change) => !isIgnored(change.file));
 }
 
+// ─── isIgnored ───────────────────────────────────────────────────────────────
+
 function isIgnored(filepath: string): boolean {
+  // Handle edge case: "unknown" files from parse failures shouldn't be ignored
+  if (filepath === "unknown") return false;
+
   for (const pattern of IGNORED_PATTERNS) {
-    // 1. Directory prefix  →  "dist/"  catches  "dist/bundle.js"
+    // 1. Directory prefix
     if (pattern.endsWith("/")) {
       if (filepath.startsWith(pattern)) return true;
       continue;
     }
 
-    // 2. Wildcard suffix  →  "*.log"  catches  "errors.log"
+    // 2. Wildcard suffix
     if (pattern.startsWith("*")) {
       if (filepath.endsWith(pattern.slice(1))) return true;
       continue;
     }
 
-    // 3. Exact basename  →  "package-lock.json"  catches  "packages/app/package-lock.json"
+    // 3. Exact basename
     const basename = filepath.split("/").pop();
     if (basename === pattern) return true;
   }
